@@ -10,12 +10,15 @@ int main(){
   sph_t sph;
   bounds_t b_sep, b_vel, b_mass_a, b_mass_b;
   double area_counter=0;
+  double divisor;
+  double total_divisor_points;
+  int points;
 
   string halo_a_str, halo_b_str, pair_id_str, temp;
 
   int i,j,k,l,m, pair_count=0;
 
-  string save_directory = "/home/jsnguyen/Dropbox/DSS_Data/";
+  string save_directory = "/home/Projects/Darksky/Catalog/DSS_Scripts/";
 
 /*
  * sphere[theta][phi]
@@ -36,7 +39,7 @@ int main(){
   cout << "------------------------------------------" << endl;
 
   ifstream f_halo_data;
-  f_halo_data.open(save_directory+"reduced_halo_pairs_full_data.txt");
+  f_halo_data.open("reduced_halo_pairs_full_data.txt");
 
   if (f_halo_data.is_open()){
 
@@ -80,7 +83,7 @@ int main(){
   for(k=0; k < N_PAIRS; k++){
 
     // Print progress in percentage
-    if (k%1000 == 0){
+    if (k%5000 == 0){
       cout <<  double(k)/double(N_PAIRS)*100 << '%' << endl;
     }
 
@@ -90,50 +93,62 @@ int main(){
         sphere[i][j] = '0';
       }
     }
-
     // Integrating over the sphere
     // The difference between steps in theta are the same as steps in phi
-    for(i = 0; i < ANGULAR_RES; i++){ //theta
-      sph.theta = double(PI)/double(ANGULAR_RES) * double(i); // Range for theta is 0 to pi
-      for(j = 0; j < ANGULAR_RES*2; j++){ //phi, must be ANGULAR_RES*2 because we are integrating over 2pi
-        sph.phi = double(PI*2.0)/double(ANGULAR_RES*2.0) * double(j); // Range for phi is 0 to 2pi
-
+    sph.theta = 0.;
+    total_divisor_points = 0.;
+    // Mass check
+        if( ( ((pair[k].a.mvir > b_mass_a.low) && (pair[k].a.mvir <  b_mass_a.up))    &&
+              ((pair[k].b.mvir > b_mass_b.low) && (pair[k].b.mvir <  b_mass_b.up)) )  ||
+            ( ((pair[k].a.mvir > b_mass_b.low) && (pair[k].a.mvir <  b_mass_b.up))    &&
+              ((pair[k].b.mvir > b_mass_a.low) && (pair[k].b.mvir <  b_mass_a.up)) )  ){
+    for(i = 0; sph.theta < double(PI); i++){
+      sph.theta = sph.theta + (double(PI)/double(ANGULAR_RES)); // Range for theta is 0 to pi
+      divisor = (ANGULAR_RES) * sin(sph.theta);//NEW
+      total_divisor_points += divisor;
+      points = int(divisor);//NEW
+ 
+      sph.phi = 0.0;
+    
+      for( j = 0; sph.phi <= double(2*PI) and points>0; j++){
+         //phi, must be ANGULAR_RES*2 because we are integrating over 2pi
+        sph.phi = sph.phi + (double(PI*2.0))/points; // Range for phi is 0 to 2pi
+   
         obs = sph_to_cart(sph); // Convert spherical coordinates to cartesian
-
+	
         rel_p = get_rel_p(pair[k].a,pair[k].b); // Calculate relative position
         rel_v = get_rel_v(pair[k].a,pair[k].b); // Calculate relative velocity
 
         obs_vel = projection(rel_v,obs); // Calculate observed velocity
         obs_sep = sep_projection(rel_p,obs); // Calculate observed separation
 
-        // Mass check
-        if( ( ((pair[k].a.mvir > b_mass_a.low) && (pair[k].a.mvir <  b_mass_a.up))    &&
-              ((pair[k].b.mvir > b_mass_b.low) && (pair[k].b.mvir <  b_mass_b.up)) )  ||
-            ( ((pair[k].a.mvir > b_mass_b.low) && (pair[k].a.mvir <  b_mass_b.up))    &&
-              ((pair[k].b.mvir > b_mass_a.low) && (pair[k].b.mvir <  b_mass_a.up)) )  ){
+       
           // Observed Velocity check
           if(magnitude(obs_vel) > b_vel.low && magnitude(obs_vel) < b_vel.up){
+      
             // Observed Separation check
             if(magnitude(obs_sep) > b_sep.low && magnitude(obs_sep) < b_sep.up){
               sphere[i][j] = ' '; // Mark where on the sphere the criterion is fulfilled
-              area_counter += ( double(PI)/double(ANGULAR_RES) ) * ( cos( sph.theta - ( double(PI)/double(ANGULAR_RES) ) ) - cos(sph.theta) );
+              area_counter += (divisor/double(points));
+           
             }
           }
         }
       }
     }
 
-    pair[k].prob = area_counter / double(4*PI); //area that works divided by the surface area of the sphere
+    pair[k].prob = area_counter / total_divisor_points; //area that works divided by the surface area of the sphere
     area_counter = 0;
 
     //checks if there is atleast one angle that works
-    for( i = 0; i<ANGULAR_RES; i++){
+    for( i = 0; i<ANGULAR_RES; i++){	
+
       for( j = 0; j<ANGULAR_RES*2; j++){
-
         // Check if there is at least one angle for which the pair can be an analog
+	
         if(sphere[i][j] != '0'){
-          pair_count++;
 
+          pair_count++;
           //Print pair attributes
           cout << pair[k].id << endl;
           print_halo(pair[k].a);
@@ -149,7 +164,7 @@ int main(){
           i = ANGULAR_RES;
           j = ANGULAR_RES*2;
 
-          //Print out the array
+  /*        //Print out the array
           for( i = 0; i<ANGULAR_RES; i++){
             for( j = 0; j<ANGULAR_RES*2; j++){
               cout << sphere[i][j];
@@ -157,7 +172,7 @@ int main(){
             cout << endl;
           }
 
-
+*/
           //outputting the angles to a file
           angle_out << "#" << endl;
           for( l = 0; l<ANGULAR_RES; l++){
