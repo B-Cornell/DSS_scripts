@@ -13,6 +13,15 @@ int main(){
   double divisor;
   double total_divisor_points;
   int points;
+  double azimuthal [ANGULAR_RES];
+  double mass_a_a_prob; 
+  double mass_a_b_prob; 
+  double mass_b_a_prob; 
+  double mass_b_b_prob; 
+  double vel_prob; 
+  double sep_prob; 
+  double total_prob;
+
 
   string halo_a_str, halo_b_str, pair_id_str, temp;
 
@@ -20,7 +29,8 @@ int main(){
 
   string save_directory = "/home/Projects/Darksky/Catalog/DSS_Scripts/";
 
-/*
+/*how many analogs
+
  * sphere[theta][phi]
  * Theta has a range of 0 to pi.
  * Phi has a range of 0 to 2pi.
@@ -122,17 +132,25 @@ int main(){
         obs_vel = projection(rel_v,obs); // Calculate observed velocity
         obs_sep = sep_projection(rel_p,obs); // Calculate observed separation
 
-       
-          // Observed Velocity check
-          if(magnitude(obs_vel) > b_vel.low && magnitude(obs_vel) < b_vel.up){
-      
-            // Observed Separation check
-            if(magnitude(obs_sep) > b_sep.low && magnitude(obs_sep) < b_sep.up){
-              sphere[i][j] = ' '; // Mark where on the sphere the criterion is fulfilled
-              area_counter += (divisor/double(points));
-           
-            }
-          }
+        mass_a_a_prob = probability("gaussian", b_mass_a.up - ((b_mass_a.up - b_mass_a.low)/2.), ((b_mass_a.up - b_mass_a.low)/2.), pair[k].a.mvir);
+
+	mass_a_b_prob = probability("gaussian", b_mass_a.up - ((b_mass_a.up - b_mass_a.low)/2.), ((b_mass_a.up - b_mass_a.low)/2.), pair[k].b.mvir);
+	
+	mass_b_a_prob = probability("gaussian", b_mass_b.up - ((b_mass_b.up - b_mass_b.low)/2.), ((b_mass_b.up - b_mass_b.low)/2.), pair[k].a.mvir);
+
+	mass_b_b_prob = probability("gaussian", b_mass_b.up - ((b_mass_b.up - b_mass_b.low)/2.), ((b_mass_b.up - b_mass_b.low)/2.), pair[k].b.mvir);
+
+        vel_prob = probability("gaussian", b_vel.up - ((b_vel.up - b_vel.low)/2.), ((b_vel.up - b_vel.low)/2.), magnitude(obs_vel));
+
+	sep_prob = probability("gaussian", b_sep.up - ((b_sep.up - b_sep.low)/2.), ((b_sep.up - b_sep.low)/2.), magnitude(obs_sep));
+	
+	total_prob = (mass_a_a_prob*mass_b_b_prob+mass_a_b_prob*mass_b_a_prob)*vel_prob*sep_prob;
+
+
+
+        sphere[i][j] = ' '; // Mark where on the sphere the criterion is fulfilled
+        area_counter += total_prob*(divisor/double(points));
+	azimuthal[i] += total_prob*(divisor/double(points));  
         }
       }
     }
@@ -190,6 +208,7 @@ int main(){
 
   pair_out.close();
   angle_out.close();
+  
 
   cout << "100%\nComplete."<< endl;
 
@@ -199,7 +218,11 @@ int main(){
   cout << "(id)                  pair_id" << endl;
   cout << "(halo a attributes)   aindex ax ay az avx avy avz amvir ar200b" << endl;
   cout << "(halo b attributes)   bindex bx by bz bvx bvy bvz bmvir br200b" << endl;
-
+  for(i = 0; sph.theta < double(PI); i++){
+    sph.theta = sph.theta + (double(PI)/double(ANGULAR_RES));
+    cout << azimuthal[i] << ",  ";
+  }
+  cout << endl;
 
   return 0;
 }
