@@ -13,7 +13,7 @@ int main(){
   double divisor;
   double total_divisor_points;
   int points;
-  double azimuthal [ANGULAR_RES];
+  double azimuthal [ANGULAR_RES-1];
   double mass_a_a_prob; 
   double mass_a_b_prob; 
   double mass_b_a_prob; 
@@ -108,20 +108,19 @@ int main(){
     sph.theta = 0.;
     total_divisor_points = 0.;
     // Mass check
-        if( ( ((pair[k].a.mvir > b_mass_a.low) && (pair[k].a.mvir <  b_mass_a.up))    &&
-              ((pair[k].b.mvir > b_mass_b.low) && (pair[k].b.mvir <  b_mass_b.up)) )  ||
-            ( ((pair[k].a.mvir > b_mass_b.low) && (pair[k].a.mvir <  b_mass_b.up))    &&
-              ((pair[k].b.mvir > b_mass_a.low) && (pair[k].b.mvir <  b_mass_a.up)) )  ){
-    for(i = 0; sph.theta < double(PI); i++){
-      sph.theta = sph.theta + (double(PI)/double(ANGULAR_RES)); // Range for theta is 0 to pi
-      divisor = (ANGULAR_RES) * sin(sph.theta);//NEW
+    if( ( ((pair[k].a.mvir > b_mass_a.low) && (pair[k].a.mvir <  b_mass_a.up))    &&
+          ((pair[k].b.mvir > b_mass_b.low) && (pair[k].b.mvir <  b_mass_b.up)) )  ||
+        ( ((pair[k].a.mvir > b_mass_b.low) && (pair[k].a.mvir <  b_mass_b.up))    &&
+          ((pair[k].b.mvir > b_mass_a.low) && (pair[k].b.mvir <  b_mass_a.up)) )  ){
+    for(i = 0; sph.theta <= double(PI); i++){
+      sph.theta = sph.theta + (double(PI)/double(ANGULAR_RES)); // Range for theta is 0 to pi. 
+      divisor = (ANGULAR_RES) * sin(sph.theta);
       total_divisor_points += divisor;
-      points = int(divisor);//NEW
+      points = int(divisor);
  
       sph.phi = 0.0;
     
       for( j = 0; sph.phi <= double(2*PI) and points>0; j++){
-         //phi, must be ANGULAR_RES*2 because we are integrating over 2pi
         sph.phi = sph.phi + (double(PI*2.0))/points; // Range for phi is 0 to 2pi
    
         obs = sph_to_cart(sph); // Convert spherical coordinates to cartesian
@@ -132,13 +131,13 @@ int main(){
         obs_vel = projection(rel_v,obs); // Calculate observed velocity
         obs_sep = sep_projection(rel_p,obs); // Calculate observed separation
 
-        mass_a_a_prob = probability("gaussian", b_mass_a.up - ((b_mass_a.up - b_mass_a.low)/2.), ((b_mass_a.up - b_mass_a.low)/2.), pair[k].a.mvir);
+        mass_a_a_prob = probability("gaussian", b_mass_a.up - ((b_mass_a.up - b_mass_a.low)/2.), ((b_mass_a.up - b_mass_a.low)/2.), pair[k].a.mvir);//probability that the mass of the first halo in the pair matches the first halo in the musketball
 
-	mass_a_b_prob = probability("gaussian", b_mass_a.up - ((b_mass_a.up - b_mass_a.low)/2.), ((b_mass_a.up - b_mass_a.low)/2.), pair[k].b.mvir);
+	mass_a_b_prob = probability("gaussian", b_mass_a.up - ((b_mass_a.up - b_mass_a.low)/2.), ((b_mass_a.up - b_mass_a.low)/2.), pair[k].b.mvir);//probability that the mass of the first halo in the pair matches the second halo in the musketball
 	
-	mass_b_a_prob = probability("gaussian", b_mass_b.up - ((b_mass_b.up - b_mass_b.low)/2.), ((b_mass_b.up - b_mass_b.low)/2.), pair[k].a.mvir);
+	mass_b_a_prob = probability("gaussian", b_mass_b.up - ((b_mass_b.up - b_mass_b.low)/2.), ((b_mass_b.up - b_mass_b.low)/2.), pair[k].a.mvir);//probability that the mass of the second halo in the pair matches the first halo in the musketball
 
-	mass_b_b_prob = probability("gaussian", b_mass_b.up - ((b_mass_b.up - b_mass_b.low)/2.), ((b_mass_b.up - b_mass_b.low)/2.), pair[k].b.mvir);
+	mass_b_b_prob = probability("gaussian", b_mass_b.up - ((b_mass_b.up - b_mass_b.low)/2.), ((b_mass_b.up - b_mass_b.low)/2.), pair[k].b.mvir);//probability that the mass of the second halo in the pair matches the second halo in the musketball
 
         vel_prob = probability("gaussian", b_vel.up - ((b_vel.up - b_vel.low)/2.), ((b_vel.up - b_vel.low)/2.), magnitude(obs_vel));
 
@@ -149,8 +148,8 @@ int main(){
 
 
         sphere[i][j] = ' '; // Mark where on the sphere the criterion is fulfilled
-        area_counter += total_prob*(divisor/double(points));
-	azimuthal[i] += total_prob*(divisor/double(points));  
+        area_counter += total_prob*(divisor/(double(points)*double(points)));
+	azimuthal[i] += total_prob*(divisor/(double(points)*double(points))); 
         }
       }
     }
