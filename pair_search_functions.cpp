@@ -135,6 +135,23 @@ bounds_t get_range_input(std::string type){
   return bound;
 }
 
+double probability(std::string type, double mean, double sigma, double value){
+	double prob;
+	if (type == "tophat"){
+		if (value<= mean + sigma and value>= mean - sigma){
+			prob = 1;
+		}
+		else{
+			prob = 0;
+		}
+	}
+	if (type == "gaussian"){
+	
+		prob = (1/(sqrt(2*PI*sigma*sigma)))*exp(((mean-value)*(value-mean))/(2*sigma*sigma));
+	}
+ 
+	return prob;
+}
 void print_halo(halo_t halo){
 
   std::cout << halo.index << " " << halo.pos.x << " " << halo.pos.y << " " << halo.pos.z << " " << halo.vel.x << " " << halo.vel.y << " " << halo.vel.z << " " << halo.mvir << " " << halo.r200b  << std::endl;

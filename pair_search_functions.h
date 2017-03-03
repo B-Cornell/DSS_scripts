@@ -2,7 +2,7 @@
 #define PAIR_SEARCH_FUNCTIONS_H
 
 #include <iostream>
-#include <cmath>
+#include <math.h>
 #include <string>
 #include <fstream>
 #include <ostream>
@@ -48,8 +48,9 @@ struct pair_t{
   halo_t b;
   double prob; //probability
 };
-
+double probability(std::string type, double mean, double sigma, double value);
 double magnitude(cart_t cart);
+//double probability(string type, double mean, double sigma, double value)
 cart_t projection(cart_t a, cart_t b);
 cart_t sep_projection(cart_t a, cart_t b);
 cart_t sph_to_cart(sph_t sph);
