@@ -1,0 +1,13 @@
+We are checking over almost 400,000 halos, which are selected by mass and separation.
+We then cycle through these, establishing another mass cutoff
+I then found the probabilities that the separation, mass, and velocity matched the musketball
+I divided this probability by the number of points we checked in that angle
+
+
+
+I think it might be better to use Jayke's way of not varying the number of points on a halo pair. We would just add up all of the probabilities of each angle and divide by the number of points. It would check the probability of each one specifically.
+
+I want help on figuring out if I wrote my gaussian graphs correctly
+
+
+I need to send my cosmosim stuff to Nate

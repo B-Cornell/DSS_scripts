@@ -147,7 +147,7 @@ double probability(std::string type, double mean, double sigma, double value){
 	}
 	if (type == "gaussian"){
 	
-		prob = (1/(sqrt(2*PI*sigma*sigma)))*exp(((mean-value)*(value-mean))/(2*sigma*sigma));
+		prob = (exp(((mean-value)*(value-mean))/(2*sigma*sigma)));
 	}
  
 	return prob;
@@ -164,4 +164,46 @@ void save_halo(halo_t halo, std::ofstream& data){
   data << halo.index << " " << halo.pos.x << " " << halo.pos.y << " " << halo.pos.z << " " << halo.vel.x << " " << halo.vel.y << " " << halo.vel.z << " " << halo.mvir << " " << halo.r200b  << std::endl;
 
   return;
+}
+
+pair_t  temp_halo(pair_t old_pair){
+double position, velocitynew=0, unitx, unity, unitz, Vel_par, Vel_perp, L;
+pair_t new_pair;
+
+position = sqrt((old_pair.a.pos.x-old_pair.b.pos.x)*(old_pair.a.pos.x-old_pair.b.pos.x)+(old_pair.a.pos.y-old_pair.b.pos.y)*(old_pair.a.pos.y-old_pair.b.pos.y)+(old_pair.a.pos.z-old_pair.b.pos.z)*(old_pair.a.pos.z-old_pair.b.pos.z));
+
+velocitynew = sqrt((old_pair.a.vel.x-old_pair.b.vel.x)*(old_pair.a.vel.x-old_pair.b.vel.x)+(old_pair.a.vel.y-old_pair.b.vel.y)*(old_pair.a.vel.y-old_pair.b.vel.y)+(old_pair.a.vel.z-old_pair.b.vel.z)*(old_pair.a.vel.z-old_pair.b.vel.z));
+
+//find the separation unit vector
+unitx = (old_pair.a.pos.x-old_pair.b.pos.x)/position;
+unity = (old_pair.a.pos.y-old_pair.b.pos.y)/position;
+unitz = (old_pair.a.pos.z-old_pair.b.pos.z)/position;
+
+
+//dot the velocity vector to the sep vector to get the velocity parallel to the separation vector
+Vel_par = ((old_pair.a.vel.x-old_pair.b.vel.x)*(old_pair.a.pos.x-old_pair.b.pos.x)+(old_pair.a.vel.y-old_pair.b.vel.y)*(old_pair.a.pos.y-old_pair.b.pos.y)+(old_pair.a.vel.z-old_pair.b.vel.z)*(old_pair.a.pos.z-old_pair.b.pos.z))/position;
+
+Vel_perp = sqrt((velocitynew*velocitynew)-(Vel_par*Vel_par));
+
+new_pair = old_pair;//Set the new pair values to the old pair values so that it is set up the same, but we can change what we need on it without changing the real pair at all
+
+//Now set the first halo to the origin for easy calculations
+new_pair.a.pos.x = 0;
+new_pair.a.pos.y = 0;
+new_pair.a.pos.z = 0;
+//Velocity is relative, so we set one halo to 0 to make the calculations easier
+new_pair.a.vel.x = 0;
+new_pair.a.vel.y = 0;
+new_pair.a.vel.z = 0;
+
+//Now set the second halo along the z axis
+new_pair.b.pos.x = 0;
+new_pair.b.pos.y = 0;
+new_pair.b.pos.z = position;
+
+//Now we set the relative velocity of the second halo
+new_pair.b.vel.x = 0;
+new_pair.b.vel.y = Vel_perp;//velocity perpendicular this is MagV-vel.z
+new_pair.b.vel.z = Vel_par;//velocity along separation vector. This is V_vector dot r-hat
+return new_pair;
 }

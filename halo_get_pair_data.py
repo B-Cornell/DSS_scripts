@@ -1,11 +1,16 @@
 from yt.utilities.sdf import load_sdf
 import math
+import urllib2
 
 HUBBLE_CONST = 0.688062
 
-sim_file = '/media/jsnguyen/JK-PEXHD/ds14_a_halos_1.0000'
+sim_file = '/home/b/Projects/DarkSky/Catalog/data_release/halos/ds14_a_halos_filter_1e15_1.0000'
 
-save_directory = '/home/jsnguyen/Desktop/'
+#urllib2.urlopen('http://darksky.slac.stanford.edu/simulations/ds14_a/halos/ds14_a_halos_1.0000')
+
+save_directory = '/home/b/Projects/DarkSky/Catalog/DSS_scripts/'
+
+print "File Read.\n\n\n\n\n\n\n\n\nLeave Alone Please\n\n\n\n\n\n"
 
 sdf_data = load_sdf(sim_file)
 
@@ -19,7 +24,7 @@ f_pairs_data.write('# bx by bz bvx bvy bvz bmvir br200b\n')
 f_pairs_data.close()
 
 f_pairs = open(save_directory+'reduced_halo_pairs.txt','r')
-f_pairs.next() #skip header line
+#f_pairs.next() #skip header line
 i=0
 for line in f_pairs:
 

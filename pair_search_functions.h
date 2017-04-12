@@ -16,7 +16,8 @@
 #define N_HALO_ATTR 9
 #define ANGULAR_RES 100 //Number of iterations to check over, angular resolution
 #define PI 3.14159265359
-#define N_PAIRS 395902
+#define N_PAIRS 50000
+//#define N_PAIRS 395902
 
 struct cart_t{
   double x;
@@ -48,12 +49,13 @@ struct pair_t{
   halo_t b;
   double prob; //probability
 };
+
 double probability(std::string type, double mean, double sigma, double value);
 double magnitude(cart_t cart);
-//double probability(string type, double mean, double sigma, double value)
 cart_t projection(cart_t a, cart_t b);
 cart_t sep_projection(cart_t a, cart_t b);
 cart_t sph_to_cart(sph_t sph);
+pair_t  temp_halo(pair_t old_pair);
 sph_t cart_to_sph(cart_t cart);
 cart_t get_rel_v(halo_t halo_a, halo_t halo_b);
 cart_t get_rel_p(halo_t halo_a, halo_t halo_b);
@@ -61,5 +63,6 @@ halo_t halo_t_parser(std::string str_input);
 bounds_t get_range_input(std::string type);
 void print_halo(halo_t halo);
 void save_halo(halo_t halo, std::ofstream& data);
+
 
 #endif
