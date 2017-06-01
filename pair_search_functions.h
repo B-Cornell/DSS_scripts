@@ -16,8 +16,9 @@
 #define N_HALO_ATTR 9
 #define ANGULAR_RES 100 //Number of iterations to check over, angular resolution
 #define PI 3.14159265359
-#define N_PAIRS 50000
+//#define N_PAIRS 1000
 //#define N_PAIRS 395902
+#define N_PAIRS 2584330
 
 struct cart_t{
   double x;

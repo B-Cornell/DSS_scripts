@@ -14,15 +14,20 @@ int main(){
   double divisor;
   double total_divisor_points;
   int points;
-  double azimuthal [ANGULAR_RES];
+  double azimuthal [ANGULAR_RES], azitemp[ANGULAR_RES];
   double mass_a_a_prob; 
   double mass_a_b_prob; 
   double mass_b_a_prob; 
   double mass_b_b_prob; 
   double vel_prob; 
   double sep_prob; 
+  double angle_prob;
   double total_prob;
-
+  int rel_vel_angle;
+  double z_vel, y_vel;
+  int returning[2];
+  double rel_vel[91];
+  
 
   string halo_a_str, halo_b_str, pair_id_str, temp;
 
@@ -50,7 +55,7 @@ int main(){
   cout << "------------------------------------------" << endl;
 
   ifstream f_halo_data;
-  f_halo_data.open("reduced_halo_pairs_full_data.txt");
+  f_halo_data.open("reduced_halo_pairs_full_data_3500Kpc.txt");
 
   if (f_halo_data.is_open()){
 
@@ -84,11 +89,11 @@ int main(){
 
   cout << "Searching for matching pairs." << endl;
 
-  ofstream pair_out; //pair output
-  pair_out.open(save_directory+"pair_output.txt");
-
-  ofstream angle_out;
-  angle_out.open(save_directory+"angle_out.txt");
+  
+  std::ofstream pyfile;
+  pyfile.open("pyfile.csv");
+  pyfile << "#HaloID, Mass 1, Mass 2, Separation, Velocity on axis, Velocity off axis, Returning, Relative Velocity Angle, Angle probs, Total prob";
+  
 
   // Iterates over all the pairs
   for(k=0; k < N_PAIRS; k++){
@@ -109,8 +114,34 @@ int main(){
         ( ((pair[k].a.mvir > b_mass_b.low) && (pair[k].a.mvir <  b_mass_b.up))    &&
           ((pair[k].b.mvir > b_mass_a.low) && (pair[k].b.mvir <  b_mass_a.up)) )  ){
     pair_count++;
-    if(pair[k].id !=19022 && pair[k].id !=22172 && pair[k].id !=29604 && pair[k].id !=33600 && pair[k].id !=47215 && pair[k].id !=52167 && pair[k].id !=60438 && pair[k].id !=62786 && pair[k].id !=72103 && pair[k].id !=72362 && pair[k].id !=91533 && pair[k].id !=97408 && pair[k].id !=106445 && pair[k].id !=115912 && pair[k].id !=130910 && pair[k].id !=132036 && pair[k].id !=136944 && pair[k].id !=137521 && pair[k].id !=139327 && pair[k].id !=146295 && pair[k].id !=152876 && pair[k].id !=160395 && pair[k].id !=160611 && pair[k].id !=164999 && pair[k].id !=174842 && pair[k].id !=180739 && pair[k].id !=184029 && pair[k].id !=188011 && pair[k].id !=188819 && pair[k].id !=190248 && pair[k].id !=190722 && pair[k].id !=193113 && pair[k].id !=193380 && pair[k].id !=196802 && pair[k].id !=203020 && pair[k].id !=203033 && pair[k].id !=214808 && pair[k].id !=215392 && pair[k].id !=220797 && pair[k].id !=220997 && pair[k].id !=223161 && pair[k].id !=230861 && pair[k].id !=235991 && pair[k].id !=243196 && pair[k].id !=250492 && pair[k].id !=251696 && pair[k].id !=259711 && pair[k].id !=261923 && pair[k].id !=262991 && pair[k].id !=273782 && pair[k].id !=274464 && pair[k].id !=275773 && pair[k].id !=277873 && pair[k].id !=280505 && pair[k].id !=288477 && pair[k].id !=289086 && pair[k].id !=291178 && pair[k].id !=292849 && pair[k].id !=292918 && pair[k].id !=294428 && pair[k].id !=305389 && pair[k].id !=309429 && pair[k].id !=312686 && pair[k].id !=313153 && pair[k].id !=314794 && pair[k].id !=315909 && pair[k].id !=323305 && pair[k].id !=326843 && pair[k].id !=327152 && pair[k].id !=336909 && pair[k].id !=338822 && pair[k].id !=351828 && pair[k].id !=356319 && pair[k].id !=358086 && pair[k].id !=358636 && pair[k].id !=361307 && pair[k].id !=362745 && pair[k].id !=367027 && pair[k].id !=367104 && pair[k].id !=371068 && pair[k].id !=381905 && pair[k].id !=382799 && pair[k].id !=388192 && pair[k].id !=391007 && pair[k].id !=392033 && pair[k].id !=393385){
-      calculation_pair = temp_halo(pair[k]);
+    calculation_pair = temp_halo(pair[k]);
+      
+      
+    pyfile << pair[k].id << ", " << calculation_pair.a.mvir << ", " << calculation_pair.b.mvir << ", " << calculation_pair.b.pos.z << ", " << calculation_pair.b.vel.z << ", " << calculation_pair.b.vel.y << ", ";   
+      /*find the velocity directions*/
+    if (calculation_pair.b.vel.z < 0.0){
+      z_vel = -calculation_pair.b.vel.z;
+      returning[0]++;
+      pyfile << "1, ";
+    }
+    else {
+      z_vel = calculation_pair.b.vel.z;
+      returning[1]++;
+      pyfile << "0, ";
+      }
+    if (calculation_pair.b.vel.y < 0.0){
+      y_vel = -calculation_pair.b.vel.y;
+    }
+    else {
+      y_vel = calculation_pair.b.vel.y;
+
+    }
+    rel_vel_angle = atan(y_vel/z_vel) * (180 / PI);
+    rel_vel[rel_vel_angle]++;
+      
+    pyfile << rel_vel_angle<< ", " ;
+      
+      
     for(i = 0; sph.theta <= double(PI); i++){
       sph.theta = sph.theta + (double(PI)/double(ANGULAR_RES)); // Range for theta is 0 to pi. 
       divisor = (ANGULAR_RES) * sin(sph.theta);
@@ -119,7 +150,7 @@ int main(){
  
       sph.phi = 0.0;
     
-      for( j = 0; sph.phi <= double(2*PI) and points>0; j++){
+      for( j = 0; sph.phi < double(2*PI) and points>0; j++){
         sph.phi = sph.phi + (double(PI*2.0))/points; // Range for phi is 0 to 2pi
    
         obs = sph_to_cart(sph); // Convert spherical coordinates to cartesian
@@ -144,24 +175,32 @@ int main(){
 	
 	total_prob = (mass_a_a_prob*mass_b_b_prob+mass_a_b_prob*mass_b_a_prob)*vel_prob*sep_prob;
 
-
+        
         area_counter += double(total_prob)*(double(divisor)/(double(points)*double(points)));
 	if (azimuthal[i] == azimuthal[i]){
 	  if (i <50){
 	    azimuthal[i] += double(total_prob)*(divisor/(double(points)*double(points)));
+	    
+	    azitemp[i] += double(total_prob)*(divisor/(double(points)*double(points)));
 	  }
 	  else {
 	    azimuthal[99-i] += double(total_prob)*(divisor/(double(points)*double(points)));
+	    azitemp[99-i] += double(total_prob)*(divisor/(double(points)*double(points)));
 	  }
 	}
+	
         }
       }
     
     calculation_pair.prob = area_counter / total_divisor_points;
     pair[k].prob = area_counter / total_divisor_points; //area that works divided by the surface area of the sphere
     area_counter = 0;
-    
-    
+    i =0;
+    for(i = 0; i <50 ; i++){
+    pyfile << azitemp[i] << ",  ";
+    azitemp[i] = 0;
+    }
+    pyfile << calculation_pair.prob << endl;
 
           
     //Print pair attributes
@@ -169,27 +208,16 @@ int main(){
     print_halo(calculation_pair.a);
     print_halo(calculation_pair.b);
     cout << "probability: " << pair[k].prob << endl;
+    cout << "relative velocity angle: " << rel_vel_angle << endl;
     cout << "------------------------------------------" << endl;
        
 
 
 } 
-}         //outputting the angles to a file
-          angle_out << "#" << endl;
-          for( l = 0; l<ANGULAR_RES; l++){
-            for( m = 0; m<ANGULAR_RES*2; m++){
-              if(sphere[l][m] != '0'){
-                angle_out << double(PI)/double(ANGULAR_RES) * l << " " << double(PI)/double(ANGULAR_RES) * m << endl;
-              }
-            }
-          }
+}
+         
 
-        
-  }
-
-  pair_out.close();
-  angle_out.close();
-  
+  pyfile.close();
 
   cout << "100%\nComplete."<< endl;
 
@@ -199,11 +227,16 @@ int main(){
   cout << "(id)                  pair_id" << endl;
   cout << "(halo a attributes)   aindex ax ay az avx avy avz amvir ar200b" << endl;
   cout << "(halo b attributes)   bindex bx by bz bvx bvy bvz bmvir br200b" << endl;
-  for(i = 0; i <51 ; i++){
+  for(i = 0; i <50 ; i++){
     sph.theta = sph.theta + (double(PI)/double(ANGULAR_RES));
     cout << azimuthal[i] << ",  ";
   }
-  cout << endl ;
-
+  cout << endl << endl;
+  for(i = 0; i < 91; i++){
+    cout << rel_vel[i] << ",  ";
+  
+  }
+  cout << endl << endl;
+  cout << returning[0] << ",  " << returning[1] << endl;
   return 0;
 }
