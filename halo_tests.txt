@@ -1,7 +1,0 @@
-# pair_id
-# ax ay az avx avy avz amvir ar200b
-# bx by bz bvx bvy bvz bmvir br200b
-0
-11038 0 0 0 0 0 0 3.55e+14 1.69143501675 
-11039 1 0 0 518.846 0 0 1.95e+14 1.71670199032 
-
