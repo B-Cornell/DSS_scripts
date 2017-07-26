@@ -1,43 +1,105 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.ticker as tick
 import math
-outgoingvel = []
-incomingvel = []
-outgoingvelprob = []
-incomingvelprob = []
+none = 0
+outmass = []
+outsep = []
+outonvel= []
+outoffvel= []
+outrelvelangle= []
+outprob= []
+outmassratio= []
+outvel= []
+hpmass = []
+hpsep = []
+hponvel = []
+hpoffvel = []
+hprelvelangle = []
+hpprob = []
+hpmassratio = []
+hpoutvel = []
+hpvel = []
+
+
 
 #this unpacks the data file
 #173568 pairs
-pairid, massa, massb, separation, onvel, offvel, incoming, relvelangle, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39, a40, a41, a42, a43, a44, a45, a46, a47, a48, a49, a50, prob = np.loadtxt('pyfile.csv', delimiter = ',', unpack = True)
+pairid, haloa, halob, massa, massb, separation, onvel, offvel, incoming, relvelangle, prob = np.loadtxt('cosmoallpairsafterpairsearch.csv', delimiter = ',', unpack = True)
+#pairid, massa, massb, separation, onvel, offvel, incoming, relvelangle, prob = np.loadtxt('cosmoallpairsafterpairsearch.csv', delimiter = ',', unpack = True)
+#massa, massb, separation, onvel, offvel, incoming, relvelangle, prob = np.loadtxt('cosmoprobs.csv', delimiter = ',', unpack = True)
+
 
 def vel(i):
-    total = math.sqrt(onvel[i]**2 + offvel[i]**2)
+    total = (math.sqrt(onvel[i]**2 + offvel[i]**2))/1000
     return(total)
+    
+    
+#this looks for all of the outbound pairs and appends them to a different list to plot
+for x in range(len(massa)):
+    #these 2 lines can find all completely isolated pairs. Not much different than non isolated pairs
+    #if haloa[x] not in halob and haloa[x] not in haloa[:x-1] and haloa[x] not in haloa[x+1:]:
+        #if halob[x] not in haloa and halob[x] not in halob[:x-1] and halob[x] not in halob[x+1:]: 
+    outmass.append((massa[x]+massb[x])/1e14)
+    outsep.append(separation[x])
+    outonvel.append(onvel[x])
+    outoffvel.append(offvel[x])
+    outrelvelangle.append(relvelangle[x])
+    outprob.append(prob[x])
+    if massa[x] > massb[x]:
+        outmassratio.append(massa[x]/massb[x])
+    else:
+        outmassratio.append(massb[x]/massa[x])
+    outvel.append(vel(x))
 
-for i in range(len(incoming)):
-    if incoming[i] == 1:
- 
-        incomingvel.append(vel(i))
-        incomingvelprob.append(vel(i)*prob[i])
-        
-    elif incoming[i] == 0:
-      
-        outgoingvel.append(vel(i))
-        outgoingvelprob.append(vel(i)*prob[i])
-        
+#this makes a smaller list of all the high probability pairs from the above list
+for x in range(len(outprob)):
+    if outprob[x] > 1500:
+        hpmass.append((massa[x]+massb[x])/1e14)
+        hpsep.append(separation[x])
+        hponvel.append(onvel[x])
+        hpoffvel.append(offvel[x])
+        hprelvelangle.append(relvelangle[x])
+        hpprob.append(prob[x])
+        if massa[x] > massb[x]:
+            hpmassratio.append(massa[x]/massb[x])
+        else:
+            hpmassratio.append(massb[x]/massa[x])
+        hpvel.append(vel(x))
+   
+args = [outmass,outsep,outvel,outrelvelangle,outmassratio,outprob]
+calls = ['Total Mass \n(10**14)','3D Separation \n(Mpc)','Velocity\n (1000km/s)','Relative \nVelocity Angle','Mass Ratio','Total Prob']
 
-plt.hist(outgoingvel,color = 'b',bins = 30,stacked = False,histtype = 'bar',rwidth = .7)
-plt.xlabel('Velocity (km/s)')
-plt.ylabel('Counts')
-plt.title('Outgoing')
+argshp = [hpmass, hpsep, hpvel, hprelvelangle, hpmassratio, hpprob]
+
+
+#start the plots
+fig, axes = plt.subplots(nrows = (len(args)), ncols = (len(args)))
+fig.subplots_adjust(hspace=0, wspace = 0)
+
+for c in range((len(args))):
+    
+    for r in range((len(args))):
+        if (r == c):
+            axes[r,c].hist(args[c], rwidth = 1, normed = True, weights = args[5])#1d histogram
+            axes[r,c].set_yticks([])
+            axes[r,c].set_xticks([])
+        elif (r > c):
+            axes[r,c].hist2d(args[c],args[r], bins = 30, cmap = 'binary', weights = args[5])#2d histogram across all arguments
+            
+            axes[r,c].scatter(argshp[c],argshp[r], c = 'b')#all high probability pairs are solid points
+            
+            if(r == (len(args)-1)):
+                axes[r,c].set_xlabel(calls[c])
+            else:
+                axes[r,c].set_xticks([])
+            if(c == 0):
+                axes[r,c].set_ylabel(calls[r])
+            else:
+                axes[r,c].set_yticks([])
+        else:
+            axes[r,c].axis('off')
+            
+
 plt.show()
-plt.hist(outgoingvelprob,color = 'b',bins = 30,stacked = False,histtype = 'bar',rwidth = .7)
-plt.xlabel('Velocity (km/s)')
-plt.ylabel('Counts Weighted with Probability')
-plt.title('Weighted Counts\nOutgoing')
-plt.show()
-
-
-
-
