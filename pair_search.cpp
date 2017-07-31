@@ -2,7 +2,13 @@
 
 using namespace std;
 
-int main(){
+int main(int argc, char *argv[]){
+
+  bool VERBOSE = false;
+
+  if ( argc !=1 && string(argv[1]) == "-v" ){
+    VERBOSE = true;
+  }
 
   vector<pair_t> pair(N_PAIRS); // This is our giant vector where we store all the halo pairs in the heap
 
@@ -10,29 +16,9 @@ int main(){
   sph_t sph;
   bounds_t b_sep, b_vel, b_mass_a, b_mass_b;
   pair_t calculation_pair;
-  double area_counter=0;
-  double divisor;
-  double total_divisor_points;
-  int points;
-  double azimuthal [ANGULAR_RES], azitemp[ANGULAR_RES];
-  double mass_a_a_prob; 
-  double mass_a_b_prob; 
-  double mass_b_a_prob; 
-  double mass_b_b_prob; 
-  double vel_prob; 
-  double sep_prob; 
-  double angle_prob;
-  double total_prob;
-  int rel_vel_angle;
-  double v_y, v_z, y_vel, z_vel, obsvel, obssep;
-  int returning[2];
-  double rel_vel[91];
-  
-
+  double mass_a_a_prob, mass_a_b_prob, mass_b_a_prob, mass_b_b_prob, vel_prob, sep_prob, angle_prob, total_prob, v_y, v_z, y_vel, z_vel, obsvel, obssep, rel_vel_angle, area_counter=0, divisor, total_divisor_points;
   string halo_a_str, halo_b_str, pair_id_str, temp;
-
-  int i,j,k,l,m, pair_count=0;
-
+  int i,j,k, pair_count=0, points;
   string save_directory = "/home/DSS_Scripts/";
 
 
@@ -67,7 +53,8 @@ int main(){
       pair[i].b = halo_t_parser(halo_b_str); // Parses pair.b data into halo_t retainer
 
       if (i%10000 == 0){
-        cout << "Processing... " <<  double(i)/double(N_PAIRS)*100 << '%' << endl;
+        cout << "Processing... " <<  double(i)/double(N_PAIRS)*100 << "%\r";
+        cout.flush();
       }
     }
     cout << "Processing... 100%\nComplete."<< endl;
@@ -78,7 +65,6 @@ int main(){
     return 1;
   }
 
-  cout << "Searching for matching pairs." << endl;
 
   
   std::ofstream savefile;
@@ -91,7 +77,8 @@ int main(){
     
     // Print progress in percentage
     if (k%1000 == 0){
-      cout <<  double(k)/double(N_PAIRS)*100 << '%' << endl;
+      cout << "Searching for matching pairs... " << double(k)/double(N_PAIRS)*100 << "%\r";
+      cout.flush();
     }
 
     // Integrating over the sphere
@@ -109,31 +96,31 @@ int main(){
     //function rotates pair to make calculations easier
     calculation_pair = temp_halo(pair[k]);
       
-
-    //find the velocity directions to see if it is inbound or outbound
-    if (calculation_pair.b.vel.z < 0.0){
-      z_vel = -calculation_pair.b.vel.z;
-      returning[0]++;
-     
-    }
-    else {
-      z_vel = calculation_pair.b.vel.z;
-      returning[1]++;
-  
+    //add in the if statement to filter out all inbound pairs
+    //if (calculation_pair.b.vel.z > 0){ 
+      
+      
+      //find the velocity directions to see if it is inbound or outbound
+      if (calculation_pair.b.vel.z < 0.0){
+        z_vel = -calculation_pair.b.vel.z;
+       
       }
-    if (calculation_pair.b.vel.y < 0.0){
-      y_vel = -calculation_pair.b.vel.y;
-    }
-    else {
-      y_vel = calculation_pair.b.vel.y;
+      else {
+        z_vel = calculation_pair.b.vel.z;
+    
+        }
+      if (calculation_pair.b.vel.y < 0.0){
+        y_vel = -calculation_pair.b.vel.y;
+      }
+      else {
+        y_vel = calculation_pair.b.vel.y;
 
-    }
-    rel_vel_angle = atan(y_vel/z_vel) * (180 / PI);
+      }
+      rel_vel_angle = atan(y_vel/z_vel) * (180 / PI);
 
       
     
-    //add in the if statement to filter out all inbound pairs
-    //if (calculation_pair.b.vel.z > 0){  
+     
     
     //writes the pair data to the save file
       savefile << pair[k].id << ", " << pair[k].a.index << ", " << pair[k].b.index << ", " << calculation_pair.a.mvir << ", " << calculation_pair.b.mvir << ", " << calculation_pair.b.pos.z << ", " << calculation_pair.b.vel.z << ", " << calculation_pair.b.vel.y << ", "  << "0, " << rel_vel_angle<< ", ";
@@ -198,19 +185,21 @@ int main(){
           
     //Print pair attributes to the terminal screen
     //Prints both original and rotated attributes
-    cout << pair[k].id << endl;
-    print_halo(pair[k].a);
-    print_halo(pair[k].b);
-    print_halo(calculation_pair.a);
-    print_halo(calculation_pair.b);
-    cout << "probability: " << pair[k].prob << endl;
-    cout << "relative velocity angle: " << rel_vel_angle << endl;
-    cout << "------------------------------------------" << endl;
+    if (VERBOSE == true) {
+      cout << pair[k].id << endl;
+      print_halo(pair[k].a);
+      print_halo(pair[k].b);
+      print_halo(calculation_pair.a);
+      print_halo(calculation_pair.b);
+      cout << "probability: " << pair[k].prob << endl;
+      cout << "relative velocity angle: " << rel_vel_angle << endl;
+      cout << "------------------------------------------" << endl;
+    }
        
 //}//This is the bracket for the outbound filter
 
-} 
-}
+    } 
+  }
          
 
   savefile.close();
@@ -223,5 +212,6 @@ int main(){
   cout << "(id)                  pair_id" << endl;
   cout << "(halo a attributes)   aindex ax ay az avx avy avz amvir ar200b" << endl;
   cout << "(halo b attributes)   bindex bx by bz bvx bvy bvz bmvir br200b" << endl;
+  
   return 0;
 }
